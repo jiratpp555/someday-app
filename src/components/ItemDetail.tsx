@@ -24,10 +24,7 @@ export default function ItemDetail({
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // View state
   const [rating, setRating] = useState(item.rating ?? 0);
-
-  // Edit state
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(item.title);
   const [subtitle, setSubtitle] = useState(item.subtitle ?? '');
@@ -66,7 +63,6 @@ export default function ItemDetail({
 
   const saveEdits = async () => {
     setSaving(true);
-    // Clean up old storage photo if URL changed
     if (item.image_url && item.image_url !== imageUrl && item.image_url.includes(`/${BUCKET}/`)) {
       const path = item.image_url.split(`/${BUCKET}/`)[1];
       if (path) await supabase.storage.from(BUCKET).remove([path]);
@@ -114,44 +110,50 @@ export default function ItemDetail({
   const displayImage = editing ? imageUrl : item.image_url;
 
   return (
-    <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
-      <div className="max-w-md mx-auto">
+    /* Backdrop — fullscreen on mobile, overlay on desktop */
+    <div
+      className="fixed inset-0 z-50 bg-white md:bg-black/60 md:flex md:items-center md:justify-center overflow-y-auto md:overflow-hidden"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      {/* Card — full on mobile, modal on desktop */}
+      <div className="w-full md:max-w-lg md:rounded-2xl md:overflow-hidden md:max-h-[88vh] md:flex md:flex-col bg-white md:shadow-2xl">
 
-        {/* Image area */}
-        <div className={`relative aspect-[4/3] ${displayImage ? '' : `bg-gradient-to-br ${gradientMap[item.category]}`}`}>
+        {/* Image */}
+        <div className={`relative aspect-[4/3] shrink-0 ${displayImage ? '' : `bg-gradient-to-br ${gradientMap[item.category]}`}`}>
           {displayImage
-            ? <img src={displayImage} alt={item.title} className="w-full h-full object-cover" /> // eslint-disable-line
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={displayImage} alt={item.title} className="w-full h-full object-cover" />
             : null}
 
-          {/* Top-left: back / cancel */}
+          {/* Top-left: back/cancel */}
           <button
             onClick={editing ? cancelEdit : onClose}
-            className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur"
+            className="absolute top-3 left-3 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-sm"
           >
             {editing ? <X size={18} /> : <ArrowLeft size={18} />}
           </button>
 
-          {/* Top-right: edit + delete (view mode) */}
+          {/* Top-right: edit + delete */}
           {!editing && (
             <div className="absolute top-3 right-3 flex gap-2">
               <button
                 onClick={enterEdit}
-                className="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur"
+                className="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-sm"
               >
                 <Pencil size={15} />
               </button>
               <button
                 onClick={deleteItem}
-                className="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur"
+                className="w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-sm"
               >
                 <Trash2 size={16} />
               </button>
             </div>
           )}
 
-          {/* Bottom photo controls (edit mode) */}
+          {/* Photo controls in edit mode */}
           {editing && (
-            <div className="absolute bottom-3 left-3 flex gap-2">
+            <div className="absolute bottom-3 left-3 flex gap-2 flex-wrap">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -163,7 +165,7 @@ export default function ItemDetail({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs backdrop-blur flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs backdrop-blur-sm flex items-center gap-1.5 disabled:opacity-50"
               >
                 <Upload size={13} />
                 {uploading ? 'Uploading…' : 'Upload photo'}
@@ -172,7 +174,7 @@ export default function ItemDetail({
                 <button
                   type="button"
                   onClick={() => setImageUrl('')}
-                  className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs backdrop-blur flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs backdrop-blur-sm flex items-center gap-1.5"
                 >
                   <ImageOff size={13} />
                   Remove
@@ -182,7 +184,8 @@ export default function ItemDetail({
           )}
         </div>
 
-        <div className="p-5 space-y-3">
+        {/* Content — scrollable on desktop */}
+        <div className="p-5 space-y-3 md:overflow-y-auto">
           {editing ? (
             <>
               <input
@@ -237,7 +240,7 @@ export default function ItemDetail({
               )}
 
               {item.note && (
-                <div className="mt-5">
+                <div className="mt-4">
                   <p className="text-xs uppercase tracking-wide text-stone-400 mb-2">Note</p>
                   <p className="text-sm bg-stone-50 p-3 rounded-lg whitespace-pre-wrap">{item.note}</p>
                 </div>
@@ -256,7 +259,7 @@ export default function ItemDetail({
               )}
 
               {item.visited && (
-                <div className="mt-5">
+                <div className="mt-4">
                   <p className="text-xs uppercase tracking-wide text-stone-400 mb-2">My rating</p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((n) => (
@@ -274,7 +277,7 @@ export default function ItemDetail({
 
               <button
                 onClick={markVisited}
-                className={`w-full mt-6 py-3 rounded-lg font-medium text-sm flex items-center justify-center gap-2 ${
+                className={`w-full mt-4 py-3 rounded-lg font-medium text-sm flex items-center justify-center gap-2 ${
                   item.visited ? 'bg-stone-100 text-stone-700' : 'bg-stone-900 text-white'
                 }`}
               >

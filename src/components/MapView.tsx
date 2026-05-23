@@ -87,13 +87,13 @@ export default function MapView({
   }, [items]);
 
   return (
-    <div className="px-4 pb-4">
+    <div>
       {mapped.length === 0 && (
         <p className="text-center text-sm text-stone-400 py-4 mb-2">
           No pinned locations yet — use the Pin button when adding items.
         </p>
       )}
-      <div ref={containerRef} className="w-full rounded-2xl overflow-hidden" style={{ height: 420 }} />
+      <div ref={containerRef} className="w-full rounded-2xl overflow-hidden" style={{ height: 'clamp(320px, 50vh, 560px)' }} />
     </div>
   );
 }
